@@ -494,4 +494,37 @@
   } else {
     _waitForReact();
   }
+
+  // ── Interceptar clique no botão de simulação (fallback global) ────────────
+  // Funciona mesmo que o onClick do React não dispare no mobile
+  document.addEventListener('click', function(e) {
+    var t = e.target;
+    // Subir na árvore DOM até 5 níveis para encontrar o link/botão
+    for (var i = 0; i < 5; i++) {
+      if (!t) break;
+      var txt = (t.textContent || '').trim();
+      var href = (t.getAttribute && t.getAttribute('href')) || '';
+      // Detetar pelo texto ou pelo href antigo
+      if (
+        txt.indexOf('simula') !== -1 && txt.indexOf('ced') !== -1 ||
+        href.indexOf('simulator') !== -1
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        var overlay = document.getElementById('dps-sim-overlay');
+        if (overlay) {
+          overlay.style.display = 'flex';
+        } else {
+          // Modal ainda não foi injetado — injetar agora e abrir
+          _initSimulator();
+          setTimeout(function() {
+            var o = document.getElementById('dps-sim-overlay');
+            if (o) o.style.display = 'flex';
+          }, 100);
+        }
+        return;
+      }
+      t = t.parentElement;
+    }
+  }, true); // capture=true para interceptar antes do React
 })();
