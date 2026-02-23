@@ -656,10 +656,12 @@
       if (!t) break;
       var txt = (t.textContent || '').trim();
       var href = (t.getAttribute && t.getAttribute('href')) || '';
-      // Detetar pelo texto ou pelo href antigo
+      // Detetar pelo texto ou pelo href antigo (inclui brasil.grupo-dps.com e #simulador)
       if (
         txt.indexOf('simula') !== -1 && txt.indexOf('ced') !== -1 ||
-        href.indexOf('simulator') !== -1
+        href.indexOf('simulator') !== -1 ||
+        href.indexOf('brasil.grupo-dps.com') !== -1 ||
+        href.indexOf('#simulador') !== -1
       ) {
         e.preventDefault();
         e.stopPropagation();
