@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador de Investimento — Lake Towers</title>
+  <meta name="description" content="Simule o seu retorno de investimento no Lake Towers Porto com cedência de posição contratual." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      min-height: 100vh;
+    }
+    /* NAVBAR */
+    .navbar {
+      background: #0f172a;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .navbar-brand-logo {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+    .navbar-brand-sub {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      font-weight: 400;
+    }
+    .navbar-back {
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .navbar-back:hover { color: #fff; }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+      color: #fff;
+      padding: 40px 24px 32px;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      font-size: clamp(22px, 5vw, 32px);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 10px;
+    }
+    .hero p {
+      font-size: 15px;
+      opacity: 0.75;
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* MAIN CONTAINER */
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 32px 16px 48px;
+    }
+
+    /* CARDS */
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 18px;
+    }
+
+    /* FORM */
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 5px;
+      margin-top: 14px;
+    }
+    label:first-child { margin-top: 0; }
+    input[type="number"], select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 14px;
+      color: #0f172a;
+      background: #fff;
+      outline: none;
+      transition: border 0.2s;
+      font-family: inherit;
+    }
+    input[type="number"]:focus, select:focus { border-color: #3b82f6; }
+
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media(max-width: 600px) { .row2 { grid-template-columns: 1fr; } }
+
+    /* PERSPETIVA */
+    .persp-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+    .persp-btn {
+      flex: 1;
+      min-width: 110px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1.5px solid #e2e8f0;
+      background: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      line-height: 1.4;
+      font-family: inherit;
+    }
+    .persp-btn:hover { border-color: #94a3b8; background: #f8fafc; }
+    .persp-btn.active-opt { background: #0f172a; color: #fff; border-color: #0f172a; }
+    .persp-btn.active-con { background: #1e40af; color: #fff; border-color: #1e40af; }
+    .persp-btn.active-ult { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+
+    /* BOTÕES */
+    .btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: background 0.2s;
+      font-family: inherit;
+    }
+    .btn-primary { background: #0f172a; color: #fff; }
+    .btn-primary:hover { background: #1e293b; }
+    .btn-ghost { background: #fff; color: #0f172a; border: 1.5px solid #0f172a; }
+    .btn-ghost:hover { background: #f1f5f9; }
+    .btn-wa { background: #25d366; color: #fff; }
+    .btn-wa:hover { background: #20ba5a; }
+
+    .hint {
+      font-size: 11.5px;
+      color: #64748b;
+      margin-top: 12px;
+      line-height: 1.6;
+    }
+
+    /* RESULTS */
+    .results-card { background: #f8fafc; }
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1.5px solid #e2e8f0;
+    }
+    .results-brand { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #64748b; }
+    .results-prop { font-size: 14px; font-weight: 700; color: #0f172a; }
+
+    .badge-persp {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+    .badge-opt { background: #dcfce7; color: #166534; }
+    .badge-con { background: #dbeafe; color: #1e40af; }
+    .badge-ult { background: #ede9fe; color: #6d28d9; }
+
+    .pills { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .pill { background: #f1f5f9; border-radius: 8px; padding: 8px 12px; flex: 1; min-width: 120px; }
+    .pill-k { font-size: 11px; color: #64748b; font-weight: 600; }
+    .pill-v { font-size: 13px; font-weight: 700; color: #0f172a; margin-top: 2px; }
+
+    .kpi3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .kpi2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    @media(max-width: 600px) { .kpi3 { grid-template-columns: 1fr 1fr; } }
+
+    .kpi-item {
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .kpi-item.primary { background: #0f172a; color: #fff; }
+    .kpi-label { font-size: 11px; font-weight: 600; opacity: 0.7; margin-bottom: 4px; }
+    .kpi-value { font-size: 14px; font-weight: 700; }
+    .kpi-value.big { font-size: 17px; }
+
+    hr.divider { border: 0; border-top: 1.5px solid #e2e8f0; margin: 16px 0; }
+
+    .paybox { }
+    .pay-title { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 10px; }
+    .pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    @media(max-width: 500px) { .pay-grid { grid-template-columns: 1fr; } }
+    .pay-item { background: #f1f5f9; border-radius: 8px; padding: 10px 12px; }
+    .pay-k { font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 3px; }
+    .pay-v { font-size: 13px; font-weight: 700; color: #0f172a; }
+
+    .schedule { font-size: 12px; color: #475569; line-height: 1.8; margin-top: 8px; }
+    .schedule ul { padding-left: 16px; }
+    .schedule li { margin-bottom: 2px; }
+    .schedule .paid { color: #16a34a; }
+    .schedule .upcoming { color: #0f172a; }
+
+    .actions { display: flex; gap: 10px; margin-top: 16px; }
+    .actions .btn { margin-top: 0; }
+
+    .disclaimer {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 14px;
+      line-height: 1.5;
+    }
+
+    /* GRID LAYOUT */
+    .sim-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    @media(max-width: 768px) { .sim-grid { grid-template-columns: 1fr; } }
+
+    /* FOOTER */
+    .footer {
+      background: #0f172a;
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+    }
+    .footer a { color: rgba(255,255,255,0.7); text-decoration: none; }
+    .footer a:hover { color: #fff; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="https://laketowers.grupo-dps.com" class="navbar-brand">
+    <div>
+      <div class="navbar-brand-logo">Lake Towers</div>
+      <div class="navbar-brand-sub">Porto, Portugal</div>
+    </div>
+  </a>
+  <a href="https://laketowers.grupo-dps.com" class="navbar-back">
+    ← Voltar ao site
+  </a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">Simulador de Investimento</div>
+  <h1>Calcule o Seu Retorno<br/>no Lake Towers</h1>
+  <p>Simule a cedência de posição contratual e descubra o seu potencial de valorização antes da escritura.</p>
+</div>
+
+<!-- MAIN -->
+<div class="container">
+  <div class="sim-grid">
+
+    <!-- COLUNA ESQUERDA: INPUTS -->
+    <div>
+      <div class="card">
+        <div class="card-title">Dados da Simulação</div>
+
+        <label>Imóvel</label>
+        <select id="property">
+          <option value="lake_towers">Lake Towers — Porto</option>
+        </select>
+
+        <label>Valor de compra do imóvel (€)</label>
+        <input type="number" id="buy_price" min="0" step="1000" value="200000" />
+
+        <div class="row2">
+          <div>
+            <label>% de crescimento ao ano</label>
+            <input type="number" id="growth" min="0" step="0.1" value="8" />
+          </div>
+          <div>
+            <label>Meses até vender</label>
+            <input type="number" id="months" min="0" step="1" value="14" />
+          </div>
+        </div>
+
+        <label>Perspetiva de valorização</label>
+        <div class="persp-bar">
+          <button class="persp-btn active-opt" id="btn_opt" onclick="setPersp('opt')">✨ Otimista<br/><span style="font-weight:400;font-size:11px;">Valores base</span></button>
+          <button class="persp-btn" id="btn_con" onclick="setPersp('con')">📉 Conservadora<br/><span style="font-weight:400;font-size:11px;">-20% sobre otimista</span></button>
+          <button class="persp-btn" id="btn_ult" onclick="setPersp('ult')">🛡️ Ultra Conservadora<br/><span style="font-weight:400;font-size:11px;">-40% sobre otimista</span></button>
+        </div>
+
+        <button class="btn btn-primary" onclick="calcular()">Calcular</button>
+
+        <p class="hint">
+          <b>Venda estimada</b> = (Compra + <b>20%</b>) × (1 + (anual/12) × meses).<br/>
+          <b>Ganho</b> = Venda − Compra.<br/>
+          <b>ROI</b> = Ganho / <b>Investimento realizado</b> (pagamentos ≤ data da venda).
+        </p>
+      </div>
+    </div>
+
+    <!-- COLUNA DIREITA: RESULTADOS -->
+    <div>
+      <div class="card results-card" id="results_card">
+        <div class="results-header">
+          <div class="results-brand">Simulação DPS Imobiliário</div>
+          <div class="results-prop" id="res_property">Lake Towers (Portugal)</div>
+        </div>
+
+        <div class="card-title" style="margin-bottom:12px;">
+          Resultados <span class="badge-persp badge-opt" id="res_badge">Otimista</span>
+        </div>
+
+        <div class="pills">
+          <div class="pill">
+            <div class="pill-k">Data da simulação</div>
+            <div class="pill-v" id="res_today">—</div>
+          </div>
+          <div class="pill">
+            <div class="pill-k">Data estimada da venda</div>
+            <div class="pill-v" id="res_sale_date">—</div>
+          </div>
+        </div>
+
+        <div class="kpi3">
+          <div class="kpi-item">
+            <div class="kpi-label">Compra</div>
+            <div class="kpi-value" id="res_buy">—</div>
+          </div>
+          <div class="kpi-item">
+            <div class="kpi-label">Base venda (+20%)</div>
+            <div class="kpi-value" id="res_base_sale">—</div>
+          </div>
+          <div class="kpi-item primary">
+            <div class="kpi-label">Venda estimada</div>
+            <div class="kpi-value big" id="res_sale">—</div>
+          </div>
+        </div>
+
+        <div class="kpi2">
+          <div class="kpi-item">
+            <div class="kpi-label">Ganho estimado</div>
+            <div class="kpi-value big" id="res_profit">—</div>
+          </div>
+          <div class="kpi-item">
+            <div class="kpi-label">ROI (ganho / investido)</div>
+            <div class="kpi-value big" id="res_roi">—</div>
+          </div>
+        </div>
+
+        <hr class="divider"/>
+
+        <div class="paybox">
+          <div class="pay-title">Pagamentos (plano do imóvel)</div>
+          <div class="pay-grid">
+            <div class="pay-item">
+              <div class="pay-k">Já pago até hoje</div>
+              <div class="pay-v" id="res_paid_today">—</div>
+            </div>
+            <div class="pay-item">
+              <div class="pay-k">Investimento realizado até vender</div>
+              <div class="pay-v" id="res_invested_by_sale">—</div>
+            </div>
+          </div>
+          <div class="schedule" id="res_schedule">—</div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-ghost" onclick="openWA()">Fazer pedido</button>
+          <button class="btn btn-primary" onclick="exportImg()">Exportar imagem</button>
+        </div>
+
+        <p class="disclaimer">Valores estimados de acordo com os dados colocados no simulador. Não constitui proposta contratual.</p>
+      </div>
+    </div>
+
+  </div><!-- end sim-grid -->
+</div><!-- end container -->
+
+<!-- FOOTER -->
+<div class="footer">
+  <p>© 2026 DPS Imobiliário · <a href="https://laketowers.grupo-dps.com">Lake Towers</a> · LIC AMI: 26301</p>
+  <p style="margin-top:4px;">Valores estimados. Não constitui proposta contratual.</p>
+</div>
+
+<script>
+// ── Dados do imóvel ──────────────────────────────────────────────────────────
+var PROPERTIES = {
+  lake_towers: {
+    name: 'Lake Towers (Portugal)',
+    basePct: 0.20,
+    schedule: [
+      { label: '15%', pct: 0.15, desc: '15% — na assinatura do CPCV', date: new Date(2026,0,9) },
+      { label: '5%',  pct: 0.05, desc: '5% — até 30/04/2026',         date: new Date(2026,3,30) },
+      { label: '10%', pct: 0.10, desc: '10% — infraestruturas (prev. 3º trim 2026)', date: new Date(2026,8,30) },
+      { label: '10%', pct: 0.10, desc: '10% — laje Piso 5 (prev. 2º trim 2027)',    date: new Date(2027,5,30) },
+      { label: '10%', pct: 0.10, desc: '10% — estrutura betão (prev. 4º trim 2027)',date: new Date(2027,11,31) },
+      { label: '50%', pct: 0.50, desc: '50% — escritura (data prevista 09/01/2029)',date: new Date(2029,0,9) }
+    ]
+  }
+};
+
+var currentPersp = 'opt';
+var PERSP_FACTOR = { opt: 1.0, con: 0.8, ult: 0.6 };
+
+function setPersp(p) {
+  currentPersp = p;
+  ['opt','con','ult'].forEach(function(k) {
+    var btn = document.getElementById('btn_' + k);
+    btn.className = 'persp-btn' + (k === p ? ' active-' + k : '');
+  });
+}
+
+function fmt(v) {
+  return v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+}
+function fmtDate(d) {
+  return d.toLocaleDateString('pt-PT', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+
+function calcular() {
+  var buyPrice = parseFloat(document.getElementById('buy_price').value) || 0;
+  var growthAno = parseFloat(document.getElementById('growth').value) || 0;
+  var months = parseInt(document.getElementById('months').value, 10) || 0;
+  var propKey = document.getElementById('property').value;
+  var prop = PROPERTIES[propKey];
+  if (!prop || buyPrice <= 0) { alert('Por favor preencha todos os campos.'); return; }
+
+  var factor = PERSP_FACTOR[currentPersp];
+  var today = new Date();
+  var saleDate = new Date(today.getFullYear(), today.getMonth() + months, today.getDate());
+
+  // Cálculo base (otimista)
+  var baseSale = buyPrice * (1 + prop.basePct);
+  var growthMensal = (growthAno / 100) / 12;
+  var saleValueOpt = baseSale * (1 + growthMensal * months);
+  // Aplicar perspetiva
+  var saleValue = buyPrice + (saleValueOpt - buyPrice) * factor;
+  var profit = saleValue - buyPrice;
+
+  // Pagamentos
+  var paidToday = 0, investedBySale = 0;
+  prop.schedule.forEach(function(p) {
+    var amt = buyPrice * p.pct;
+    if (p.date <= today) paidToday += amt;
+    if (p.date <= saleDate) investedBySale += amt;
+  });
+
+  var roi = investedBySale > 0 ? (profit / investedBySale * 100) : 0;
+
+  // Atualizar UI
+  var badgeClasses = { opt: 'badge-opt', con: 'badge-con', ult: 'badge-ult' };
+  var badgeLabels = { opt: 'Otimista', con: 'Conservadora', ult: 'Ultra Conservadora' };
+  var badge = document.getElementById('res_badge');
+  badge.className = 'badge-persp ' + badgeClasses[currentPersp];
+  badge.textContent = badgeLabels[currentPersp];
+
+  document.getElementById('res_property').textContent = prop.name;
+  document.getElementById('res_today').textContent = fmtDate(today);
+  document.getElementById('res_sale_date').textContent = fmtDate(saleDate);
+  document.getElementById('res_buy').textContent = fmt(buyPrice);
+  document.getElementById('res_base_sale').textContent = fmt(baseSale);
+  document.getElementById('res_sale').textContent = fmt(saleValue);
+  document.getElementById('res_profit').textContent = fmt(profit);
+  document.getElementById('res_roi').textContent = roi.toFixed(1) + '%';
+  document.getElementById('res_paid_today').textContent = fmt(paidToday) + ' (' + Math.round(paidToday/buyPrice*100) + '%)';
+  document.getElementById('res_invested_by_sale').textContent = fmt(investedBySale) + ' (' + Math.round(investedBySale/buyPrice*100) + '%)';
+
+  // Schedule
+  var paidList = [], upcomingList = [];
+  prop.schedule.forEach(function(p) {
+    var amt = buyPrice * p.pct;
+    var line = '<li><b>' + p.label + '</b> — ' + p.desc + ' (' + fmtDate(p.date) + ') — <b>' + fmt(amt) + '</b></li>';
+    if (p.date <= today) paidList.push('<span class="paid">' + line + '</span>');
+    else upcomingList.push('<span class="upcoming">' + line + '</span>');
+  });
+  var schedHTML = '';
+  if (paidList.length) schedHTML += '<div style="font-weight:700;font-size:12px;margin-bottom:4px;">Pagamentos que já deveriam estar pagos (até hoje)</div><ul>' + paidList.join('') + '</ul>';
+  if (upcomingList.length) schedHTML += '<div style="font-weight:700;font-size:12px;margin:10px 0 4px;">Próximos pagamentos (após hoje)</div><ul>' + upcomingList.join('') + '</ul>';
+  document.getElementById('res_schedule').innerHTML = schedHTML;
+}
+
+function openWA() {
+  var buyPrice = parseFloat(document.getElementById('buy_price').value) || 0;
+  var growthAno = parseFloat(document.getElementById('growth').value) || 0;
+  var months = parseInt(document.getElementById('months').value, 10) || 0;
+  var labels = { opt: 'Otimista', con: 'Conservadora', ult: 'Ultra Conservadora' };
+  var msg = 'Simulação Lake Towers — Cedência de Posição\n\n'
+    + 'Imóvel: Lake Towers (Porto)\n'
+    + 'Valor de compra: ' + buyPrice.toLocaleString('pt-PT') + ' €\n'
+    + 'Crescimento ao ano: ' + growthAno + '%\n'
+    + 'Meses até vender: ' + months + '\n'
+    + 'Perspetiva: ' + labels[currentPersp] + '\n\n'
+    + 'Quero mais informações sobre este investimento.';
+  window.open('https://wa.me/351925708456?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+}
+
+function exportImg() {
+  var card = document.getElementById('results_card');
+  html2canvas(card, { scale: 2, backgroundColor: '#f8fafc' }).then(function(canvas) {
+    var link = document.createElement('a');
+    link.download = 'simulacao-lake-towers.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+}
+
+// Calcular automaticamente ao carregar
+window.addEventListener('DOMContentLoaded', function() { calcular(); });
+</script>
+
+</body>
+</html>
