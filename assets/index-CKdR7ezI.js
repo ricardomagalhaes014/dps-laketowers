@@ -217,6 +217,13 @@ Error generating stack: `+l.message+`
         </div>
       </div>
 
+      <div class="dps-sim__persprow">
+        <span class="dps-sim__persp-label">Perspetiva:</span>
+        <button id="dps_persp_opt" class="dps-sim__perspbtn is-active" type="button">&#127775; Otimista</button>
+        <button id="dps_persp_cons" class="dps-sim__perspbtn" type="button">&#128200; Conservadora</button>
+        <button id="dps_persp_ucons" class="dps-sim__perspbtn" type="button">&#128737; Ultra Conservadora</button>
+      </div>
+
       <button id="dps_calc" class="dps-sim__btn" type="button">Calcular</button>
 
       <div class="dps-sim__hint">
@@ -235,7 +242,7 @@ Error generating stack: `+l.message+`
         <div class="dps-sim__resultsTitle" id="dps_results_property">—</div>
       </div>
 
-      <div class="dps-sim__title">Resultados</div>
+      <div class="dps-sim__title">Resultados <span id="dps_persp_badge" class="dps-sim__persp-badge dps-sim__persp-badge--opt">&#127775; Otimista</span></div>
 
       <div class="dps-sim__pillrow">
         <div class="dps-sim__pill">
@@ -477,7 +484,18 @@ Error generating stack: `+l.message+`
   .dps-modal__previewBody{ font-size:12.5px; line-height:1.35; white-space:pre-wrap; }
   .dps-modal__fineprint{ font-size:12px; opacity:.7; margin-top:8px; line-height:1.35; }
 
-  @media (max-width: 960px) {
+  /* ── Perspetiva buttons ── */
+  .dps-sim__persprow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .dps-sim__persp-label { font-size:12.5px; font-weight:700; opacity:.65; white-space:nowrap; }
+  .dps-sim__perspbtn { padding:6px 14px; border-radius:20px; border:1.5px solid #cbd5e1; background:#f8fafc; color:#334155; font-size:12.5px; font-weight:600; cursor:pointer; transition:all .18s; }
+  .dps-sim__perspbtn:hover { border-color:#7c3aed; color:#7c3aed; background:#f5f3ff; }
+  .dps-sim__perspbtn.is-active { background:#7c3aed; color:#fff; border-color:#7c3aed; }
+  .dps-sim__persp-badge { display:inline-block; margin-left:8px; padding:2px 10px; border-radius:12px; font-size:11.5px; font-weight:700; }
+  .dps-sim__persp-badge--opt { background:#d1fae5; color:#065f46; }
+  .dps-sim__persp-badge--cons { background:#fef3c7; color:#92400e; }
+  .dps-sim__persp-badge--ucons { background:#fee2e2; color:#991b1b; }
+
+    @media (max-width: 960px) {
     .dps-sim__grid { grid-template-columns: 1fr; }
     .dps-sim__kpi{ grid-template-columns: 1fr; }
     .dps-sim__pillrow, .dps-sim__paygrid, .dps-sim__row2, .dps-sim__kpi2 { grid-template-columns: 1fr; }
@@ -700,16 +718,22 @@ Error generating stack: `+l.message+`
     const paidPctToday = sumPaidPctUntil(prop.schedule, simDate);
     const paidToday = buyPrice * (paidPctToday / 100);
 
-    // Render
+    // Render (com fator de perspetiva)
+    const pf = typeof _perspFactor !== "undefined" ? _perspFactor : 1.0;
+    const adjBaseSale = baseSale * pf;
+    const adjSaleValue = saleValue * pf;
+    const adjProfit = adjSaleValue - buyPrice;
+    const adjRoi = investedBySale > 0 ? (adjProfit / investedBySale) : 0;
+
     el("dps_today").textContent = fmtDate.format(simDate);
     el("dps_sale_date").textContent = fmtDate.format(saleDate);
     el("dps_buy_out").textContent = euro.format(buyPrice);
-    el("dps_base_sale").textContent = euro.format(baseSale);
-    el("dps_sale_value").textContent = euro.format(saleValue);
+    el("dps_base_sale").textContent = euro.format(adjBaseSale);
+    el("dps_sale_value").textContent = euro.format(adjSaleValue);
 
     const profitEl = el("dps_profit");
-    profitEl.textContent = euro.format(profit);
-    profitEl.style.color = profit >= 0 ? "#0a7a2f" : "#b00020";
+    profitEl.textContent = euro.format(adjProfit);
+    profitEl.style.color = adjProfit >= 0 ? "#0a7a2f" : "#b00020";
 
     el("dps_roi").textContent = investedBySale > 0 ? \`\${(roi*100).toFixed(1)}%\` : "—";
     el("dps_paid_today").textContent = \`\${euro.format(paidToday)} (\${paidPctToday.toFixed(0)}%)\`;
@@ -758,7 +782,30 @@ Error generating stack: `+l.message+`
     }
   }
 
-  // Events
+  // ── Perspetiva ──
+  let _perspFactor = 1.0;
+
+  const _perspConfig = [
+    { id: "dps_persp_opt",   factor: 1.0, badgeClass: "dps-sim__persp-badge--opt",   badgeText: "\u2728 Otimista" },
+    { id: "dps_persp_cons",  factor: 0.8, badgeClass: "dps-sim__persp-badge--cons",  badgeText: "\uD83D\uDCC8 Conservadora" },
+    { id: "dps_persp_ucons", factor: 0.6, badgeClass: "dps-sim__persp-badge--ucons", badgeText: "\uD83D\uDEE1 Ultra Conservadora" }
+  ];
+
+  function setPersp(cfg) {
+    _perspFactor = cfg.factor;
+    _perspConfig.forEach(c => el(c.id).classList.remove("is-active"));
+    el(cfg.id).classList.add("is-active");
+    const badge = el("dps_persp_badge");
+    badge.className = "dps-sim__persp-badge " + cfg.badgeClass;
+    badge.textContent = cfg.badgeText;
+    calc();
+  }
+
+  _perspConfig.forEach(cfg => {
+    el(cfg.id).addEventListener("click", () => setPersp(cfg));
+  });
+
+    // Events
   el("dps_country_pt").addEventListener("click", () => switchCountry("PT"));
   el("dps_country_br").addEventListener("click", () => switchCountry("BR"));
 
