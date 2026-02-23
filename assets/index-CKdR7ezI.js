@@ -508,9 +508,10 @@ Error generating stack: `+l.message+`
      PARTE 2/2 — JAVASCRIPT
      (Inclui: cálculo, ROI correto, Portugal/Brasil, WhatsApp e Exportar imagem SEM watermark)
 ========================= -->
+`;
+  document.body.appendChild(_overlay.firstElementChild);
 
-
-<script>
+  // Executar o JS do simulador diretamente
 (function(){
   const el = (id) => document.getElementById(id);
 
@@ -838,6 +839,8 @@ Error generating stack: `+l.message+`
 
   // Init
   switchCountry("PT");
+})()
+
 })();
 </script>
   </div>
