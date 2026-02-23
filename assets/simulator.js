@@ -182,8 +182,42 @@
 
       // BRASIL
       '<div id="dps_br_section" class="dps-sim__card" style="display:none;">',
-      '<div class="dps-sim__title">Brasil</div>',
-      '<div class="dps-sim__note">Aqui v\u00e3o poder ser adicionados outros simuladores e im\u00f3veis do Brasil.</div>',
+      '<div class="dps-sim__title">Simulador Brasil \u2014 Parcelas + Anuidades + Cess\u00e3o</div>',
+      // Valor do im\u00f3vel
+      '<label class="dps-sim__label">Valor do Im\u00f3vel (R$)</label>',
+      '<input id="dps_br_valor" class="dps-sim__input" type="number" value="370000" min="1"/>',
+      // Entrada
+      '<label class="dps-sim__label">Entrada (m\u00ednimo 10%)</label>',
+      '<input id="dps_br_entrada" class="dps-sim__input" type="number" value="37000" min="1"/>',
+      // Chaves (readonly)
+      '<label class="dps-sim__label">Chaves (10% do valor total \u2014 autom\u00e1tico)</label>',
+      '<input id="dps_br_chaves" class="dps-sim__input" type="number" value="37000" readonly style="opacity:0.75;"/>',
+      // Parcelas
+      '<label class="dps-sim__label">N\u00famero de parcelas mensais</label>',
+      '<select id="dps_br_parcelas" class="dps-sim__input"><option value="100">100</option><option value="120">120</option><option value="140" selected>140</option></select>',
+      // Anuidade
+      '<div class="dps-sim__row2">',
+      '<div><label class="dps-sim__label">Valor da Anuidade (R$)</label><input id="dps_br_anuidade" class="dps-sim__input" type="number" value="7333.33" min="0" step="0.01"/></div>',
+      '<div><label class="dps-sim__label">N\u00famero de Anuidades</label><input id="dps_br_num_anuidades" class="dps-sim__input" type="number" value="12" min="0" max="60"/></div>',
+      '</div>',
+      '<hr style="border:0;border-top:1.5px solid #e2e8f0;margin:16px 0;"/>',
+      // Valoriza\u00e7\u00e3o e m\u00eas de cess\u00e3o
+      '<div class="dps-sim__row2">',
+      '<div><label class="dps-sim__label">Valoriza\u00e7\u00e3o ao ano (%)</label><input id="dps_br_valorizacao" class="dps-sim__input" type="number" value="18" min="0" step="0.01"/></div>',
+      '<div><label class="dps-sim__label">M\u00eas em que pretende ceder posi\u00e7\u00e3o</label><input id="dps_br_mes_venda" class="dps-sim__input" type="number" value="24" min="0" max="140"/></div>',
+      '</div>',
+      // C\u00e2mbio
+      '<label class="dps-sim__label">Taxa de C\u00e2mbio R$ \u2192 \u20ac (opcional)</label>',
+      '<input id="dps_br_cambio" class="dps-sim__input" type="number" placeholder="Ex: 6.50" step="0.01" min="0"/>',
+      // Bot\u00f5es
+      '<button id="dps_br_calc" class="dps-sim__btn" type="button" style="margin-top:16px;">Calcular</button>',
+      '<button id="dps_br_wa" class="dps-sim__btn dps-sim__btn--ghost" type="button" style="margin-top:8px;">&#128232; Enviar por WhatsApp</button>',
+      // Resultado
+      '<div id="dps_br_resultado" style="margin-top:16px;display:none;">',
+      '<hr style="border:0;border-top:1.5px solid #e2e8f0;margin:16px 0;"/>',
+      '<div class="dps-sim__title" style="margin-bottom:12px;">Resultado da Simula\u00e7\u00e3o</div>',
+      '<div id="dps_br_resultado_html"></div>',
+      '</div>',
       '</div>',
 
       // WhatsApp modal
@@ -276,9 +310,9 @@
         el('dps_results_property').textContent = state.propertyName + ' (Portugal)';
       } else {
         el('dps_header_badge').textContent = 'Brasil';
-        el('dps_header_title').textContent = 'Em prepara\u00e7\u00e3o';
-        el('dps_header_sub').textContent = 'Aqui ser\u00e3o adicionados outros simuladores e im\u00f3veis do Brasil.';
-        el('dps_results_property').textContent = 'Brasil (em prepara\u00e7\u00e3o)';
+        el('dps_header_title').textContent = 'Simulador Brasil';
+        el('dps_header_sub').textContent = 'Parcelas + Anuidades + Cess\u00e3o de posi\u00e7\u00e3o contratual.';
+        el('dps_results_property').textContent = 'Brasil';
       }
     }
 
@@ -431,10 +465,128 @@
       }
     }
 
+    // ── Lógica Brasil ─────────────────────────────────────────────────────────
+    var brl = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    function moedaBR(v, isEuro) {
+      return (isEuro ? '€ ' : 'R$ ') + brl.format(Number(v) || 0);
+    }
+    function clampBR(n, min, max) { return Math.max(min, Math.min(max, n)); }
+    function syncChavesBR() {
+      var val = parseFloat(el('dps_br_valor').value) || 0;
+      el('dps_br_chaves').value = (val * 0.10).toFixed(2);
+    }
+    function calcularBR() {
+      syncChavesBR();
+      var valorImovel = parseFloat(el('dps_br_valor').value) || 0;
+      var entrada = parseFloat(el('dps_br_entrada').value) || 0;
+      var chaves = valorImovel * 0.10;
+      var parcelas = parseInt(el('dps_br_parcelas').value, 10) || 140;
+      var anuidade = parseFloat(el('dps_br_anuidade').value) || 0;
+      var numAnuidades = parseInt(el('dps_br_num_anuidades').value, 10) || 0;
+      var valorizacaoAno = parseFloat(el('dps_br_valorizacao').value) || 0;
+      var mesVenda = clampBR(parseInt(el('dps_br_mes_venda').value, 10) || 0, 0, parcelas);
+      var cambio = parseFloat(el('dps_br_cambio').value);
+      var isEuro = !isNaN(cambio) && cambio > 0;
+      var conv = function(v) { return isEuro ? (v / cambio) : v; };
+
+      if (valorImovel <= 0) return;
+      if (entrada < valorImovel * 0.10) {
+        alert('A entrada deve ser no m\u00ednimo 10% do valor do im\u00f3vel.');
+        return;
+      }
+
+      var mensalidade = (valorImovel - entrada - chaves) / parcelas;
+      var anuidadesPagas = clampBR(Math.floor(mesVenda / 12), 0, numAnuidades);
+      var totalAnuidadesPagas = anuidadesPagas * anuidade;
+      var mensalidadesPagas = mesVenda * mensalidade;
+      var chavesPagas = (mesVenda >= parcelas) ? chaves : 0;
+      var investidoAte = entrada + mensalidadesPagas + totalAnuidadesPagas + chavesPagas;
+      var taxaMensal = (valorizacaoAno / 100) / 12;
+      var valorEstimado = valorImovel * (1 + taxaMensal * mesVenda);
+      var lucro = valorEstimado - investidoAte;
+      var mesesRestantes = Math.max(parcelas - mesVenda, 0);
+      var mensalidadesRestantes = mesesRestantes * mensalidade;
+      var anuidadesRestantes = Math.max(numAnuidades - anuidadesPagas, 0);
+      var totalAnuidadesRestantes = anuidadesRestantes * anuidade;
+      var chavesRestantes = (mesVenda < parcelas) ? chaves : 0;
+      var saldoRestante = mensalidadesRestantes + totalAnuidadesRestantes + chavesRestantes;
+
+      // Guardar para WhatsApp
+      el('dps_br_resultado')._brState = {
+        valorImovel: valorImovel, entrada: entrada, chaves: chaves,
+        parcelas: parcelas, mensalidade: mensalidade,
+        anuidade: anuidade, numAnuidades: numAnuidades,
+        anuidadesPagas: anuidadesPagas, totalAnuidadesPagas: totalAnuidadesPagas,
+        mesVenda: mesVenda, valorizacaoAno: valorizacaoAno,
+        investidoAte: investidoAte, valorEstimado: valorEstimado, lucro: lucro,
+        saldoRestante: saldoRestante, isEuro: isEuro, cambio: cambio,
+        mensalidadesRestantes: mensalidadesRestantes,
+        anuidadesRestantes: anuidadesRestantes, totalAnuidadesRestantes: totalAnuidadesRestantes,
+        chavesRestantes: chavesRestantes
+      };
+
+      var html = '<table style="width:100%;border-collapse:collapse;font-size:14px;">' +
+        '<tr><td style="padding:6px 0;color:#64748b;">Valor do Im\u00f3vel</td><td style="text-align:right;font-weight:700;">' + moedaBR(conv(valorImovel), isEuro) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">Entrada</td><td style="text-align:right;font-weight:700;">' + moedaBR(conv(entrada), isEuro) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">Chaves (10%)</td><td style="text-align:right;font-weight:700;">' + moedaBR(conv(chaves), isEuro) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">Mensalidade calculada</td><td style="text-align:right;font-weight:700;">' + moedaBR(conv(mensalidade), isEuro) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">Anuidades pagas at\u00e9 m\u00eas ' + mesVenda + ' (' + anuidadesPagas + ')</td><td style="text-align:right;font-weight:700;">' + moedaBR(conv(totalAnuidadesPagas), isEuro) + '</td></tr>' +
+        '<tr style="border-top:2px solid #e2e8f0;"><td style="padding:8px 0;font-weight:800;">Investido at\u00e9 ao m\u00eas ' + mesVenda + '</td><td style="text-align:right;font-weight:800;font-size:16px;">' + moedaBR(conv(investidoAte), isEuro) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">Valoriza\u00e7\u00e3o ao ano</td><td style="text-align:right;font-weight:700;">' + valorizacaoAno.toFixed(2) + '%</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">Valor estimado no m\u00eas ' + mesVenda + '</td><td style="text-align:right;font-weight:700;">' + moedaBR(conv(valorEstimado), isEuro) + '</td></tr>' +
+        '<tr style="border-top:2px solid #0f172a;background:#f0fdf4;"><td style="padding:8px 0;font-weight:800;color:#16a34a;">Lucro estimado na cess\u00e3o</td><td style="text-align:right;font-weight:800;font-size:18px;color:#16a34a;">' + moedaBR(conv(lucro), isEuro) + '</td></tr>' +
+        '</table>' +
+        '<div style="margin-top:14px;padding:12px;background:#f8fafc;border-radius:8px;font-size:13px;">' +
+        '<strong>O novo comprador paga ao investidor:</strong><br>' +
+        moedaBR(conv(investidoAte), isEuro) + ' (reembolso) + ' + moedaBR(conv(lucro), isEuro) + ' (valoriza\u00e7\u00e3o) = <strong>' + moedaBR(conv(valorEstimado), isEuro) + '</strong><br><br>' +
+        '<strong>O novo comprador assume o saldo restante:</strong><br>' +
+        '\u2022 Mensalidades restantes (' + mesesRestantes + '): ' + moedaBR(conv(mensalidadesRestantes), isEuro) + '<br>' +
+        '\u2022 Anuidades restantes (' + anuidadesRestantes + '): ' + moedaBR(conv(totalAnuidadesRestantes), isEuro) + '<br>' +
+        '\u2022 Chaves restantes: ' + moedaBR(conv(chavesRestantes), isEuro) + '<br>' +
+        '<strong>Saldo restante total: ' + moedaBR(conv(saldoRestante), isEuro) + '</strong>' +
+        '</div>';
+
+      el('dps_br_resultado_html').innerHTML = html;
+      el('dps_br_resultado').style.display = '';
+    }
+    function enviarWhatsAppBR() {
+      var res = el('dps_br_resultado');
+      if (!res._brState) { calcularBR(); }
+      var s = res._brState;
+      if (!s) return;
+      var msg = 'Simula\u00e7\u00e3o Brasil \u2014 DPS Imobili\u00e1rio\n\n' +
+        'Im\u00f3vel: R$ ' + s.valorImovel.toLocaleString('pt-BR') + '\n' +
+        'Entrada: R$ ' + s.entrada.toLocaleString('pt-BR') + '\n' +
+        'Chaves (10%): R$ ' + s.chaves.toLocaleString('pt-BR') + '\n' +
+        'Parcelas: ' + s.parcelas + '\n' +
+        'Mensalidade calculada: R$ ' + s.mensalidade.toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2}) + '\n\n' +
+        'Anuidade: R$ ' + s.anuidade.toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2}) + '\n' +
+        'N\u00ba Anuidades: ' + s.numAnuidades + '\n' +
+        'Anuidades pagas at\u00e9 m\u00eas ' + s.mesVenda + ': ' + s.anuidadesPagas + ' (R$ ' + s.totalAnuidadesPagas.toLocaleString('pt-BR') + ')\n\n' +
+        'Ceder posi\u00e7\u00e3o no m\u00eas: ' + s.mesVenda + '\n' +
+        'Valoriza\u00e7\u00e3o/ano: ' + s.valorizacaoAno.toFixed(2) + '%\n' +
+        'Investido at\u00e9 ao m\u00eas ' + s.mesVenda + ': R$ ' + s.investidoAte.toLocaleString('pt-BR') + '\n' +
+        'Valor estimado no m\u00eas ' + s.mesVenda + ': R$ ' + s.valorEstimado.toLocaleString('pt-BR') + '\n' +
+        'Lucro estimado: R$ ' + s.lucro.toLocaleString('pt-BR') + '\n\n' +
+        'Quero mais informa\u00e7\u00f5es.';
+      var url = 'https://wa.me/351925708456?text=' + encodeURIComponent(msg);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
     // ── Event Listeners ───────────────────────────────────────────────────────
     el('dps_close_btn').addEventListener('click', function() { el('dps-sim-overlay').style.display = 'none'; });
     el('dps_country_pt').addEventListener('click', function() { switchCountry('PT'); });
     el('dps_country_br').addEventListener('click', function() { switchCountry('BR'); });
+    // Brasil listeners
+    el('dps_br_valor').addEventListener('input', function() { syncChavesBR(); calcularBR(); });
+    el('dps_br_entrada').addEventListener('input', calcularBR);
+    el('dps_br_parcelas').addEventListener('change', calcularBR);
+    el('dps_br_anuidade').addEventListener('input', calcularBR);
+    el('dps_br_num_anuidades').addEventListener('input', calcularBR);
+    el('dps_br_valorizacao').addEventListener('input', calcularBR);
+    el('dps_br_mes_venda').addEventListener('input', calcularBR);
+    el('dps_br_cambio').addEventListener('input', calcularBR);
+    el('dps_br_calc').addEventListener('click', calcularBR);
+    el('dps_br_wa').addEventListener('click', enviarWhatsAppBR);
     el('dps_calc').addEventListener('click', calc);
     ['dps_property_pt', 'dps_buy_price', 'dps_growth', 'dps_months'].forEach(function(id) {
       el(id).addEventListener('input', calc);
