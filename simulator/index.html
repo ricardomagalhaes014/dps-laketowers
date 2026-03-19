@@ -308,6 +308,12 @@
       <div class="card">
         <div class="card-title">Dados da Simulação</div>
 
+        <label>Tipologia</label>
+        <div class="persp-bar" style="margin-top:4px;">
+          <button class="persp-btn active-opt" id="btn_t1t2" onclick="setTipo('t1t2')">🏠 T1 Smart / T2 Smart<br/><span style="font-weight:400;font-size:11px;">Plano escalonado 6 fases</span></button>
+          <button class="persp-btn" id="btn_t3" onclick="setTipo('t3')">🏢 T3<br/><span style="font-weight:400;font-size:11px;">20% + 15% + 65%</span></button>
+        </div>
+
         <label>Imóvel</label>
         <select id="property">
           <option value="lake_towers">Lake Towers — Porto</option>
@@ -431,8 +437,8 @@
 <script>
 // ── Dados do imóvel ──────────────────────────────────────────────────────────
 var PROPERTIES = {
-  lake_towers: {
-    name: 'Lake Towers (Portugal)',
+  lake_towers_t1t2: {
+    name: 'Lake Towers — T1 Smart / T2 Smart (Portugal)',
     basePct: 0.20,
     schedule: [
       { label: '15%', pct: 0.15, desc: '15% — na assinatura do CPCV', date: new Date(2026,0,9) },
@@ -442,11 +448,28 @@ var PROPERTIES = {
       { label: '10%', pct: 0.10, desc: '10% — estrutura betão (prev. 4º trim 2027)',date: new Date(2027,11,31) },
       { label: '50%', pct: 0.50, desc: '50% — escritura (data prevista 09/01/2029)',date: new Date(2029,0,9) }
     ]
+  },
+  lake_towers_t3: {
+    name: 'Lake Towers — T3 (Portugal)',
+    basePct: 0.20,
+    schedule: [
+      { label: '20%', pct: 0.20, desc: '20% — agora (na assinatura do CPCV)', date: new Date(2026,0,9) },
+      { label: '15%', pct: 0.15, desc: '15% — na conclusão do betão (prev. 4º trim 2027)', date: new Date(2027,11,31) },
+      { label: '65%', pct: 0.65, desc: '65% — na escritura (data prevista 09/01/2029)', date: new Date(2029,0,9) }
+    ]
   }
 };
 
 var currentPersp = 'opt';
+var currentTipo = 't1t2';
 var PERSP_FACTOR = { opt: 1.0, con: 0.8, ult: 0.6 };
+
+function setTipo(t) {
+  currentTipo = t;
+  document.getElementById('btn_t1t2').className = 'persp-btn' + (t === 't1t2' ? ' active-opt' : '');
+  document.getElementById('btn_t3').className = 'persp-btn' + (t === 't3' ? ' active-opt' : '');
+  calcular();
+}
 
 function setPersp(p) {
   currentPersp = p;
@@ -468,7 +491,9 @@ function calcular() {
   var growthAno = parseFloat(document.getElementById('growth').value) || 0;
   var months = parseInt(document.getElementById('months').value, 10) || 0;
   var propKey = document.getElementById('property').value;
-  var prop = PROPERTIES[propKey];
+  // Seleccionar o plano de pagamento conforme a tipologia escolhida
+  var propDataKey = (propKey === 'lake_towers') ? ('lake_towers_' + currentTipo) : propKey;
+  var prop = PROPERTIES[propDataKey];
   if (!prop || buyPrice <= 0) { alert('Por favor preencha todos os campos.'); return; }
 
   var factor = PERSP_FACTOR[currentPersp];
@@ -530,8 +555,9 @@ function openWA() {
   var growthAno = parseFloat(document.getElementById('growth').value) || 0;
   var months = parseInt(document.getElementById('months').value, 10) || 0;
   var labels = { opt: 'Otimista', con: 'Conservadora', ult: 'Ultra Conservadora' };
+  var tipoLabel = currentTipo === 't3' ? 'T3' : 'T1 Smart / T2 Smart';
   var msg = 'Simulação Lake Towers — Cedência de Posição\n\n'
-    + 'Imóvel: Lake Towers (Porto)\n'
+    + 'Imóvel: Lake Towers (Porto) — ' + tipoLabel + '\n'
     + 'Valor de compra: ' + buyPrice.toLocaleString('pt-PT') + ' €\n'
     + 'Crescimento ao ano: ' + growthAno + '%\n'
     + 'Meses até vender: ' + months + '\n'
