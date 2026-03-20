@@ -123,7 +123,15 @@
       '<div class="dps-sim__title">Dados da simula\u00e7\u00e3o (Portugal)</div>',
       '<label class="dps-sim__label">Escolher im\u00f3vel</label>',
       '<select id="dps_property_pt" class="dps-sim__input"><option value="lake_towers">Lake Towers</option></select>',
-      '<label class="dps-sim__label">Valor de compra do im\u00f3vel</label>',
+      '<label class="dps-sim__label">Tipologia</label>',
+      '<select id="dps_tipologia_pt" class="dps-sim__input">',
+      '<option value="t1_smart">T1 Smart</option>',
+      '<option value="t2_smart">T2 Smart</option>',
+      '<option value="t2">T2</option>',
+      '<option value="t3">T3</option>',
+      '<option value="t3_smart">T3 Smart</option>',
+      '</select>',
+      '<label class="dps-sim__label">Valor de compra do im\u00f3vel (\u20ac)</label>',
       '<input id="dps_buy_price" class="dps-sim__input" type="number" min="0" step="1000" value="200000"/>',
       '<div class="dps-sim__row2">',
       '<div><label class="dps-sim__label">% de crescimento ao ano</label><input id="dps_growth" class="dps-sim__input" type="number" min="0" step="0.1" value="8"/></div>',
@@ -250,18 +258,33 @@
     var WA_TARGET = '351925708456';
     var perspFactor = 1.0; // 1.0 = otimista, 0.8 = conservadora, 0.6 = ultra
 
+    // Planos de pagamento por tipologia
+    var scheduleT1T2 = [
+      { pct: 15, label: '15% \u2014 na assinatura do CPCV (09/01/2026)', date: '2026-01-09' },
+      { pct: 5,  label: '5% \u2014 at\u00e9 30/04/2026', date: '2026-04-30' },
+      { pct: 10, label: '10% \u2014 infraestruturas (prev. 3\u00ba trim 2026)', date: '2026-09-30' },
+      { pct: 10, label: '10% \u2014 laje Piso 5 (prev. 2\u00ba trim 2027)', date: '2027-06-30' },
+      { pct: 10, label: '10% \u2014 estrutura bet\u00e3o (prev. 4\u00ba trim 2027)', date: '2027-12-31' },
+      { pct: 50, label: '50% \u2014 escritura (data prevista 09/01/2029)', date: '2029-01-09' }
+    ];
+    var scheduleT3 = [
+      { pct: 20, label: '20% \u2014 na assinatura do CPCV (09/01/2026)', date: '2026-01-09' },
+      { pct: 15, label: '15% \u2014 na conclus\u00e3o do bet\u00e3o (prev. 4\u00ba trim 2027)', date: '2027-12-31' },
+      { pct: 65, label: '65% \u2014 na escritura (data prevista 09/01/2029)', date: '2029-01-09' }
+    ];
+
     var ptProperties = {
       lake_towers: {
         name: 'Lake Towers',
         upliftPct: 20,
-        schedule: [
-          { pct: 15, label: '15% \u2014 na assinatura do CPCV (09/01/2026)', date: '2026-01-09' },
-          { pct: 5,  label: '5% \u2014 at\u00e9 30/04/2026', date: '2026-04-30' },
-          { pct: 10, label: '10% \u2014 infraestruturas (prev. 3\u00ba trim 2026)', date: '2026-09-30' },
-          { pct: 10, label: '10% \u2014 laje Piso 5 (prev. 2\u00ba trim 2027)', date: '2027-06-30' },
-          { pct: 10, label: '10% \u2014 estrutura bet\u00e3o (prev. 4\u00ba trim 2027)', date: '2027-12-31' },
-          { pct: 50, label: '50% \u2014 escritura (data prevista)', date: '2029-01-09' }
-        ]
+        tipologias: {
+          't1_smart': { label: 'T1 Smart', schedule: scheduleT1T2 },
+          't2_smart': { label: 'T2 Smart', schedule: scheduleT1T2 },
+          't2':       { label: 'T2',       schedule: scheduleT1T2 },
+          't3':       { label: 'T3',       schedule: scheduleT3 },
+          't3_smart': { label: 'T3 Smart', schedule: scheduleT3 }
+        },
+        defaultTipologia: 't1_smart'
       }
     };
 
@@ -307,7 +330,9 @@
         el('dps_header_badge').textContent = 'Portugal';
         el('dps_header_title').textContent = state.propertyName;
         el('dps_header_sub').textContent = 'Ced\u00eancia de posi\u00e7\u00e3o com valoriza\u00e7\u00e3o e plano de pagamentos do im\u00f3vel.';
-        el('dps_results_property').textContent = state.propertyName + ' (Portugal)';
+        var tipSel = el('dps_tipologia_pt');
+        var tipLabel = tipSel ? tipSel.options[tipSel.selectedIndex].text : '';
+        el('dps_results_property').textContent = state.propertyName + (tipLabel ? ' \u2014 ' + tipLabel : '') + ' (Portugal)';
       } else {
         el('dps_header_badge').textContent = 'Brasil';
         el('dps_header_title').textContent = 'Simulador Brasil';
@@ -406,6 +431,9 @@
       if (state.country !== 'PT') return;
       var key = el('dps_property_pt').value;
       var prop = ptProperties[key];
+      var tipKey = el('dps_tipologia_pt') ? el('dps_tipologia_pt').value : prop.defaultTipologia;
+      var tipologia = prop.tipologias[tipKey] || prop.tipologias[prop.defaultTipologia];
+      var schedule = tipologia.schedule;
       var buyPrice = Math.max(0, Number(el('dps_buy_price').value || 0));
       var annualPct = Math.max(0, Number(el('dps_growth').value || 0));
       var months = Math.max(0, Math.floor(Number(el('dps_months').value || 0)));
@@ -416,10 +444,10 @@
       var monthlyRate = (annualPct / 100) / 12;
       var saleValueRaw = baseSaleRaw * (1 + monthlyRate * months);
       var profitRaw = saleValueRaw - buyPrice;
-      var paidPctSale = sumPaidPctUntil(prop.schedule, saleDate);
+      var paidPctSale = sumPaidPctUntil(schedule, saleDate);
       var investedBySale = buyPrice * (paidPctSale / 100);
       var roiRaw = investedBySale > 0 ? (profitRaw / investedBySale) : 0;
-      var paidPctToday = sumPaidPctUntil(prop.schedule, simDate);
+      var paidPctToday = sumPaidPctUntil(schedule, simDate);
       var paidToday = buyPrice * (paidPctToday / 100);
 
       // Aplicar perspetiva (só nos valores estimados, não no preço de compra nem pagamentos)
@@ -441,7 +469,7 @@
       el('dps_invested_by_sale').textContent = euro.format(investedBySale) + ' (' + paidPctSale.toFixed(0) + '%)';
 
       var done = [], next = [];
-      prop.schedule.forEach(function(item) {
+      schedule.forEach(function(item) {
         var due = parseISO(item.date);
         var amount = buyPrice * (item.pct / 100);
         var line = '<li><b>' + item.pct + '%</b> \u2014 ' + item.label + ' (<span>' + fmtDate.format(due) + '</span>) \u2014 <b>' + euro.format(amount) + '</b></li>';
@@ -588,9 +616,12 @@
     el('dps_br_calc').addEventListener('click', calcularBR);
     el('dps_br_wa').addEventListener('click', enviarWhatsAppBR);
     el('dps_calc').addEventListener('click', calc);
-    ['dps_property_pt', 'dps_buy_price', 'dps_growth', 'dps_months'].forEach(function(id) {
-      el(id).addEventListener('input', calc);
-      el(id).addEventListener('change', calc);
+    ['dps_property_pt', 'dps_tipologia_pt', 'dps_buy_price', 'dps_growth', 'dps_months'].forEach(function(id) {
+      var elem = el(id);
+      if (elem) {
+        elem.addEventListener('input', calc);
+        elem.addEventListener('change', calc);
+      }
     });
     el('dps_persp_opt').addEventListener('click', function() { setPerspetiva(1.0, 'dps_persp_opt'); });
     el('dps_persp_con').addEventListener('click', function() { setPerspetiva(0.8, 'dps_persp_con'); });
